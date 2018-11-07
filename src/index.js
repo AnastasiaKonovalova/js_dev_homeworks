@@ -242,7 +242,7 @@ function observeChildNodes(where, fn) {
         subtree: true
     };
     let mutateCheck = (mutations) => {
-        mutations.forEach(function(mutation) {
+        mutations.forEach((mutation) => {
             let added = mutation.addedNodes;
             let removed = mutation.removedNodes;
 
