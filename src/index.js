@@ -50,6 +50,9 @@ function skipDefault(eventName, target) {
    emulateClick(document.querySelector('a')) // для указанного элемента должно быть сэмулировано события click
  */
 function emulateClick(target) {
+    let evt = new Event('click');
+
+    target.dispatchEvent(evt);
 }
 
 /*
@@ -81,9 +84,16 @@ function delegate(target, fn) {
    кликов для указанного элемента, который вызовется только один раз и затем удалится
  */
 function once(target, fn) {
-  target.addEventListener('click', function(e) {
-    console.log(e.eventPhase)
-  })
+    let add = () => {
+        fn();
+        remove();
+    }
+
+    target.addEventListener('click', add)
+
+    let remove = () => {
+        target.removeEventListener('click', add)
+    }
 }
 
 export {
