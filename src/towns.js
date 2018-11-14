@@ -47,7 +47,7 @@ const filterResult = homeworkContainer.querySelector('#filter-result');
  */
 
 function loadTowns() {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
         let xhr = new XMLHttpRequest();
 
         xhr.open('GET', 'https://raw.githubusercontent.com/smelukov/citiesTest/master/cities.json', true);
@@ -59,19 +59,49 @@ function loadTowns() {
             let resultArr = JSON.parse(this.response);
 
             resultArr.sort((a, b) => {
-                if (a.name > b.name) return 1;
-                if (a.name < b.name) return -1;
+                if (a.name > b.name) { 
+                    return 1; 
+                }
+                if (a.name < b.name) { 
+                    return -1;
+                }
             });
 
-            homeworkContainer.removeChild(loadingBlock);
-            homeworkContainer.appendChild(filterBlock);
-            filterBlock.style.display = 'block'
+            loadingBlock.style.display = 'none';
+            filterBlock.style.display = 'block';
         
             resolve(resultArr);
         });
-        xhr.send()
+        xhr.send();
+        xhr.addEventListener('error', function() {
+            reject( new Error('Не удалось загрузить города') )
+        });
+
+        if (xhr.status !== 200) {
+            console.log(xhr.status); //тут всегда выводит 0 и выбрасывает ошибку
+            // reject( new Error('Не удалось загрузить города') )
+        }
     });
 }
+
+let cities;
+let onResolved = (resolvedValue) => cities = resolvedValue;
+let onRejected = (error) =>{
+    loadingBlock.style.display = 'none';
+
+    let errorDiv = document.createElement('div');
+    let repeatBtn = document.createElement('button');
+
+    errorDiv.textContent = error.message;
+    repeatBtn.textContent = 'Повторить';
+
+    homeworkContainer.appendChild(errorDiv);
+    homeworkContainer.appendChild(repeatBtn);
+
+    repeatBtn.addEventListener('click', loadTowns)
+}
+
+loadTowns().then(onResolved, onRejected);
 
 /*
  Функция должна проверять встречается ли подстрока chunk в строке full
@@ -88,8 +118,32 @@ function isMatching(full, chunk) {
     return full.toLowerCase().indexOf(chunk.toLowerCase()) >= 0 ? true : false;
 }
 
+const list = document.createElement('ul');
+
+filterResult.appendChild(list);
+
 filterInput.addEventListener('keyup', function() {
-    // это обработчик нажатия кливиш в текстовом поле
+
+    while (list.children.length > 0) {
+        for (let child of list.children) {
+            list.removeChild(child)
+        }
+    }
+
+    filterResult.style.display = 'block';
+
+    if (filterInput.value !== '') {
+    
+        for (let city of cities) {
+
+            if ( isMatching(city.name, filterInput.value) ) {
+                let item = document.createElement('li');
+
+                item.textContent = city.name;
+                list.appendChild(item);
+            }
+        }
+    }
 });
 
 export {
