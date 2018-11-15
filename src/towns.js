@@ -89,7 +89,6 @@ function loadTowns() {
         xhr.send();
 
         xhr.addEventListener('error', function() {
-            console.log('error')
             reject( new Error('Не удалось загрузить города') )
         });
 
@@ -97,25 +96,41 @@ function loadTowns() {
 }
 // Достать массив из промиса
 let cities;
-let onResolved = (resolvedValue) => cities = resolvedValue;
+let errorDiv;
+let repeatBtn;
+
+let onResolved = (resolvedValue) => {
+    cities = resolvedValue;
+    if (errorDiv && repeatBtn) {
+        errorDiv.style.display = 'none'
+        repeatBtn.style.display = 'none'
+    };
+};
+
 let onRejected = (error) =>{
     loadingBlock.style.display = 'none';
 
-    let errorDiv = document.createElement('div');
-    let repeatBtn = document.createElement('button');
+    errorDiv = document.createElement('div');
+    repeatBtn = document.createElement('button');
 
     errorDiv.textContent = error.message;
     repeatBtn.textContent = 'Повторить';
+    errorDiv.style.display = 'block'
+    repeatBtn.style.display = 'block'
 
     homeworkContainer.appendChild(errorDiv);
     homeworkContainer.appendChild(repeatBtn);
 
-    repeatBtn.addEventListener('click', loadTowns)
+    repeatBtn.addEventListener('click', getTowns)
 };
 
-loadTowns()
-    .then(onResolved)
-    .catch(onRejected);
+const getTowns = () => {
+    loadTowns()
+        .then(onResolved)
+        .catch(onRejected);
+};
+
+getTowns()
 
 /*
  Функция должна проверять встречается ли подстрока chunk в строке full
