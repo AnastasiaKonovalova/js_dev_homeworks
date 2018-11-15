@@ -91,6 +91,9 @@ function loadTowns() {
         xhr.addEventListener('error', function() {
             reject( new Error('Не удалось загрузить города') )
         });
+        xhr.addEventListener('abort', function() {
+            reject( new Error('Не удалось загрузить города') )
+        });
 
     });
 }
