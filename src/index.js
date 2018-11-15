@@ -1,132 +1,55 @@
-/* ДЗ 1 - Функции */
+/* ДЗ 6 - Асинхронность и работа с сетью */
 
 /*
  Задание 1:
 
- 1.1: Добавьте к функции параметр с любым именем
- 1.2: Функция должна возвращать аргумент, переданный ей в качестве параметра
+ Функция должна возвращать Promise, который должен быть разрешен через указанное количество секунду
 
  Пример:
-   returnFirstArgument(10) вернет 10
-   returnFirstArgument('привет') вернет `привет`
-
- Другими словами: функция должна возвращать в неизменном виде то, что поступает ей на вход
+   delayPromise(3) // вернет promise, который будет разрешен через 3 секунды
  */
-function returnFirstArgument(a) {
-    return a;
+function delayPromise(seconds) {
+    return new Promise((resolve) => {
+        setTimeout(() => {
+            resolve();
+        }, seconds*1000);
+    });
 };
+
 
 /*
  Задание 2:
 
- 2.1: Функция должна возвращать сумму переданных аргументов
+ 2.1: Функция должна вернуть Promise, который должен быть разрешен с массивом городов в качестве значения
+
+ Массив городов пожно получить отправив асинхронный запрос по адресу
+ https://raw.githubusercontent.com/smelukov/citiesTest/master/cities.json
+
+ 2.2: Элементы полученного массива должны быть отсортированы по имени города
 
  Пример:
-   sumWithDefaults(10, 20) вернет 30
-   sumWithDefaults(2, 4) вернет 6
-
- 2.1 *: Значение по умолчанию для второго аргумента должно быть равно 100
-
- Пример:
-   sumWithDefaults(10) вернет 110
+   loadAndSortTowns().then(towns => console.log(towns)) // должна вывести в консоль отсортированный массив городов
  */
-function sumWithDefaults(a, b) {
-    if (b === undefined) {
-        b = 100
-    };
+function loadAndSortTowns() {
+    return new Promise((resolve) => {
+        let xhr = new XMLHttpRequest();
 
-    return a + b;
-};
+        xhr.open('GET', 'https://raw.githubusercontent.com/smelukov/citiesTest/master/cities.json', true);
+        xhr.addEventListener('load', function() {
+            let resultArr = JSON.parse(this.response);
 
-/*
- Задание 3:
-
- Функция должна принимать другую функцию и возвращать результат вызова этой функции
-
- Пример:
-   returnFnResult(() => 'привет') вернет 'привет'
- */
-function returnFnResult(fn) {
-    let result = fn();
-
-    return result;
-};
-
-/*
- Задание 4:
-
- Функция должна принимать число и возвращать новую функцию (F)
- При вызове функции F, переданное ранее число должно быть увеличено на единицу и возвращено из F
-
- Пример:
-   var f = returnCounter(10);
-
-   console.log(f()); // выведет 11
-   console.log(f()); // выведет 12
-   console.log(f()); // выведет 13
- */
-function returnCounter(number) {
-    if (number === undefined) {
-        number = 0
-    };
-
-    return function F() {
-        return number += 1;
-    };
-};
-
-/*
- Задание 5 *:
-
- Функция должна возвращать все переданные ей аргументы в виде массива
- Количество переданных аргументов заранее неизвестно
-
- Пример:
-   returnArgumentsArray(1, 2, 3) вернет [1, 2, 3]
- */
-function returnArgumentsArray() {
-    let resultArray = [];
-
-    for (let i = 0; i < arguments.length; i++) {
-        resultArray[i] = arguments[i];
-    };
-
-    return resultArray;
-};
-
-/*
- Задание 6 *:
-
- Функция должна принимать другую функцию (F) и некоторое количество дополнительных аргументов
- Функция должна привязать переданные аргументы к функции F и вернуть получившуюся функцию
-
- Пример:
-   function sum(a, b) {
-     return a + b;
-   }
-
-   var newSum = bindFunction(sum, 2, 4);
-
-   console.log(newSum()) выведет 6
- */
-function bindFunction() {
-    let F = arguments[0];
-    let FArgs = [];
-
-    for (let i = 1; i < arguments.length; i++) {
-        FArgs[i - 1] = arguments[i];
-    };
-    
-    return function() {
-        return F.apply(this, FArgs);  
-    };  
-};
+            resultArr.sort((a, b) => {
+                if (a.name > b.name) return 1;
+                if (a.name < b.name) return -1;
+            });
+            
+            resolve(resultArr);
+        });
+        xhr.send()
+    });
+}
 
 export {
-    returnFirstArgument,
-    sumWithDefaults,
-    returnArgumentsArray,
-    returnFnResult,
-    returnCounter,
-    bindFunction
-}
+    delayPromise,
+    loadAndSortTowns
+};
