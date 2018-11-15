@@ -55,8 +55,21 @@ function loadTowns() {
         xhr.addEventListener('loadstart', function() {
             homeworkContainer.appendChild(loadingBlock);
         });
+
         xhr.addEventListener('load', function() {
-            let resultArr = JSON.parse(this.response);
+            if (xhr.status !== 200) {
+                reject( new Error('Не удалось загрузить города') )
+            };
+
+            let resultArr;
+
+            try {
+                resultArr = JSON.parse(this.response);
+            } catch (err) {
+                reject(err);
+
+                return;
+            };
 
             resultArr.sort((a, b) => {
                 if (a.name > b.name) { 
@@ -69,21 +82,20 @@ function loadTowns() {
 
             loadingBlock.style.display = 'none';
             filterBlock.style.display = 'block';
-        
+                        
             resolve(resultArr);
         });
+
         xhr.send();
+
         xhr.addEventListener('error', function() {
+            console.log('error')
             reject( new Error('Не удалось загрузить города') )
         });
 
-        if (xhr.status !== 200) {
-            console.log(xhr.status); //тут всегда выводит 0 и выбрасывает ошибку
-            // reject( new Error('Не удалось загрузить города') )
-        }
     });
 }
-
+// Достать массив из промиса
 let cities;
 let onResolved = (resolvedValue) => cities = resolvedValue;
 let onRejected = (error) =>{
@@ -99,9 +111,11 @@ let onRejected = (error) =>{
     homeworkContainer.appendChild(repeatBtn);
 
     repeatBtn.addEventListener('click', loadTowns)
-}
+};
 
-loadTowns().then(onResolved, onRejected);
+loadTowns()
+    .then(onResolved)
+    .catch(onRejected);
 
 /*
  Функция должна проверять встречается ли подстрока chunk в строке full
@@ -118,15 +132,15 @@ function isMatching(full, chunk) {
     return full.toLowerCase().indexOf(chunk.toLowerCase()) >= 0 ? true : false;
 }
 
-const list = document.createElement('ul');
+const resultList = document.createElement('ul');
 
-filterResult.appendChild(list);
+filterResult.appendChild(resultList);
 
 filterInput.addEventListener('keyup', function() {
 
-    while (list.children.length > 0) {
-        for (let child of list.children) {
-            list.removeChild(child)
+    while (resultList.children.length > 0) {
+        for (let child of resultList.children) {
+            resultList.removeChild(child)
         }
     }
 
@@ -140,7 +154,7 @@ filterInput.addEventListener('keyup', function() {
                 let item = document.createElement('li');
 
                 item.textContent = city.name;
-                list.appendChild(item);
+                resultList.appendChild(item);
             }
         }
     }
