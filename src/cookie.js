@@ -43,10 +43,165 @@ const addButton = homeworkContainer.querySelector('#add-button');
 // таблица со списком cookie
 const listTable = homeworkContainer.querySelector('#list-table tbody');
 
+let cookieName;
+let cookieValue;
+let row;
+let nameCell;
+let valueCell;
+let deleteCell;
+let deleteBtn;
+let nameCells;
+
+const cookies = parseCookie();
+const deleteButtons = listTable.getElementsByTagName('BUTTON');
+const rows = listTable.rows;
+
+function isMatching(full, chunk) {
+    return full.toLowerCase().indexOf(chunk.toLowerCase()) >= 0 ? true : false;
+}
+
 filterNameInput.addEventListener('keyup', function() {
+    if (filterNameInput.value !== '') {
+        for (let cell of nameCells) {
+            if ( isMatching(cell.textContent, filterNameInput.value) ) {
+    
+            }
+        }
+    }
     // здесь можно обработать нажатия на клавиши внутри текстового поля для фильтрации cookie
 });
 
+function addNode(tag, text, parent, attr) {
+    let elemName = document.createElement(tag);
+
+    elemName.textContent = text;
+    elemName.setAttribute('data-cellValue', attr);
+    parent.appendChild(elemName);
+
+    return elemName;
+}
+
+function addDeleteBtn(parent) {
+    let btn = document.createElement('button');
+
+    btn.textContent = 'Удалить';
+    parent.appendChild(btn);
+    btn.addEventListener('click', (e) => {
+        let parentRow = e.target.parentNode.parentNode;
+        let cookName = parentRow.cells[0].textContent;
+    
+        if (cookName in cookies) {
+            let date = new Date(0);
+    
+            document.cookie = `${cookName}=${cookieValue}; ; expires=${date.toUTCString()}`;
+        }
+        listTable.removeChild(parentRow);
+    });
+}
+
+function loadCookies() {
+    for (let key in cookies) {
+        row = document.createElement('tr');
+        nameCell = addNode('td', key, row, 'nameCell');
+        valueCell = addNode('td', cookies[key], row, 'valueCell');
+        deleteCell = addNode('td', '', row, 'deleteCell');
+        deleteBtn = addDeleteBtn(deleteCell);
+        listTable.appendChild(row);
+    }
+    nameCells = document.querySelectorAll('td[data-cellValue = "nameCell"]');
+}
+loadCookies();
+
+// for (let button of deleteButtons) {
+//     button.addEventListener('click', (e) => {
+//         let parentRow = e.target.parentNode.parentNode;
+//         let cookName = parentRow.cells[0].textContent;
+    
+//         if (cookName in cookies) {
+//             let date = new Date(0);
+    
+//             document.cookie = `${cookName}=${cookieValue}; ; expires=${date.toUTCString()}`;
+//         }
+//         listTable.removeChild(parentRow);
+//     });
+// }
+
 addButton.addEventListener('click', () => {
+    if (addNameInput.value === '' || addValueInput.value === '') { 
+        return
+    }
+
+    cookieName = addNameInput.value;
+    cookieValue = addValueInput.value;
+
+    if (cookieName in cookies) {
+        if (cookies[cookieName] === addValueInput.value) {
+            return;
+        } 
+        document.cookie = `${cookieName}=${cookieValue}`;
+        let cell = findCell(rows, cookieName, 0);
+
+        cell.nextElementSibling.textContent = cookieValue;
+
+    } else {
+        document.cookie = `${cookieName}=${cookieValue}`;
+    
+        row = document.createElement('tr');
+        nameCell = addNode('td', cookieName, row, 'nameCell');
+        valueCell = addNode('td', cookieValue, row, 'valueCell');
+        deleteCell = addNode('td', '', row, 'deleteCell');
+        deleteBtn = addDeleteBtn(deleteCell);
+        
+        listTable.appendChild(row);
+    }
+    // let checkNames = checkTable(0);
+
+    // let checkN = checkNames.some((str)=>{
+    //     return str === addNameInput.value
+    // });
+
+    addNameInput.value = '';
+    addValueInput.value = '';
+    nameCells = document.querySelectorAll('td[data-cellValue = "nameCell"]');
+
+    // let checkValues = checkTable(1);
+
+    // if ( checkValues.some((str)=>{
+    //     return str === addValueInput.value
+    // }) ) return;
+
     // здесь можно обработать нажатие на кнопку "добавить cookie"
 });
+
+function findCell(tableRows, str, columnNumber) {
+    for (let row of tableRows) {
+        if (row.cells[columnNumber].textContent === str) {
+            return row.cells[columnNumber];
+        }
+    }
+}
+
+function checkTable(columnNum) {
+    let texts = [];
+
+    for (let row of rows) {
+        texts.push(row.cells[columnNum].textContent)
+    }
+    
+    return texts;
+}
+
+function parseCookie() {
+    let cookieArr = document.cookie.split('; ');
+    let obj = {};
+
+    cookieArr.forEach(function(item) {
+        let [cooName, value] = item.split('=');
+
+        this[cooName] = value;
+    }, obj)
+
+    return obj;
+}
+
+console.log(nameCells)
