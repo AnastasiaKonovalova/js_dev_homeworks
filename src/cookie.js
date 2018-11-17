@@ -60,7 +60,6 @@ let cookies;
 // Коллекция рядов тела таблицы. Обновляется в loadCookies() и в обработчике кнопки "Добавить"
 let rows;
 
-
 // Вспомогательные функции
 
 // Поиск в строках
@@ -98,14 +97,16 @@ function addDeleteBtn(parent) {
 // Добавление в таблицу уже имеющихся в браузере кук при загрузке страницы и запись коллекции ячеек с именами загруженных кук
 function loadCookies() {
     for (let key in cookies) {
-        row = document.createElement('tr');
-        nameCell = addNode('td', key, row, 'nameCell');
-        valueCell = addNode('td', cookies[key], row, 'valueCell');
-        deleteCell = addNode('td', '', row, 'deleteCell');
-        deleteBtn = addDeleteBtn(deleteCell);
-        listTable.appendChild(row);
-        row.style.display = 'table-row';
-    };
+        if (cookies.hasOwnProperty(key)) {
+            row = document.createElement('tr');
+            nameCell = addNode('td', key, row, 'nameCell');
+            valueCell = addNode('td', cookies[key], row, 'valueCell');
+            deleteCell = addNode('td', '', row, 'deleteCell');
+            deleteBtn = addDeleteBtn(deleteCell);
+            listTable.appendChild(row);
+            row.style.display = 'table-row';
+        }
+    }
     nameCells = document.querySelectorAll('td[data-cellValue = "nameCell"]'); // Записать коллекцию ячеек с именами
     rows = listTable.rows; // Записать коллекцию рядов таблицы
 }
@@ -148,13 +149,13 @@ filterNameInput.addEventListener('keyup', function() {
                 cell.parentNode.style.display = 'none';
             } else if ( isMatching(cell.textContent, filter) || isMatching(cell.nextElementSibling.textContent, filter) ) {
                 cell.parentNode.style.display = 'table-row';
-            };
-        };
+            }
+        }
     } else {
         for (let row of rows) {
             row.style.display = 'table-row';
-        };
-    };
+        }
+    }
 });
 
 // Добавление кук
@@ -175,6 +176,11 @@ addButton.addEventListener('click', () => {
         let cell = findCell(rows, cookieName, 0);
 
         cell.nextElementSibling.textContent = cookieValue;
+        if (filter !== '') {
+            if (!isMatching(cookieValue, filter) ) {
+                cell.parentNode.style.display = 'none'
+            }
+        }
 
     } else {
         document.cookie = `${cookieName}=${cookieValue}`;
@@ -200,7 +206,6 @@ addButton.addEventListener('click', () => {
     rows = listTable.rows; // Записать коллекцию рядов таблицы
     parseCookie(); // Обновить объект с куками
 });
-
 
 // Пока не понадобилось
 
