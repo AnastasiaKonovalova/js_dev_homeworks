@@ -43,34 +43,31 @@ const addButton = homeworkContainer.querySelector('#add-button');
 // таблица со списком cookie
 const listTable = homeworkContainer.querySelector('#list-table tbody');
 
-let cookieName;
-let cookieValue;
+// Перезаписываемые переменные. Нужны в loadCookies() и в обработчике кнопки "Добавить"
+// Сюда записываем и перезаписываем создание дом-элеметов рядов и ячеек с определенным текстовым содержимым
 let row;
 let nameCell;
 let valueCell;
 let deleteCell;
+// Сюда записываем и перезаписываем создание дом-элеметов кнопок "Удалить"
 let deleteBtn;
+
+// Тут хранится и обновляется коллекция ячеек с именами кук. 
+// Обновляется в loadCookies() и в обработчике кнопки "Добавить"
 let nameCells;
+// Тут хранится и обновляется объект с именами и значениями имеющихся в браузере кук. Записывается из parseCookie()
+let cookies;
+// Коллекция рядов тела таблицы. Обновляется в loadCookies() и в обработчике кнопки "Добавить"
+let rows;
 
-const cookies = parseCookie();
-const deleteButtons = listTable.getElementsByTagName('BUTTON');
-const rows = listTable.rows;
 
+// Вспомогательные функции
+
+// Поиск в строках
 function isMatching(full, chunk) {
     return full.toLowerCase().indexOf(chunk.toLowerCase()) >= 0 ? true : false;
 }
-
-filterNameInput.addEventListener('keyup', function() {
-    if (filterNameInput.value !== '') {
-        for (let cell of nameCells) {
-            if ( isMatching(cell.textContent, filterNameInput.value) ) {
-    
-            }
-        }
-    }
-    // здесь можно обработать нажатия на клавиши внутри текстового поля для фильтрации cookie
-});
-
+// Добавление ячеек
 function addNode(tag, text, parent, attr) {
     let elemName = document.createElement(tag);
 
@@ -80,7 +77,7 @@ function addNode(tag, text, parent, attr) {
 
     return elemName;
 }
-
+// Добавление кнопок "Удалить" с уже повешенными обработчиками событий
 function addDeleteBtn(parent) {
     let btn = document.createElement('button');
 
@@ -93,12 +90,12 @@ function addDeleteBtn(parent) {
         if (cookName in cookies) {
             let date = new Date(0);
     
-            document.cookie = `${cookName}=${cookieValue}; ; expires=${date.toUTCString()}`;
+            document.cookie = `${cookName}=''; ; expires=${date.toUTCString()}`;
         }
         listTable.removeChild(parentRow);
     });
 }
-
+// Добавление в таблицу уже имеющихся в браузере кук при загрузке страницы и запись коллекции ячеек с именами загруженных кук
 function loadCookies() {
     for (let key in cookies) {
         row = document.createElement('tr');
@@ -107,35 +104,71 @@ function loadCookies() {
         deleteCell = addNode('td', '', row, 'deleteCell');
         deleteBtn = addDeleteBtn(deleteCell);
         listTable.appendChild(row);
-    }
-    nameCells = document.querySelectorAll('td[data-cellValue = "nameCell"]');
+        row.style.display = 'table-row';
+    };
+    nameCells = document.querySelectorAll('td[data-cellValue = "nameCell"]'); // Записать коллекцию ячеек с именами
+    rows = listTable.rows; // Записать коллекцию рядов таблицы
 }
+// Поиск ячейки с нужным текстом (str) в определенной коллекции рядов и колонке
+function findCell(tableRows, str, columnNumber) {
+    for (let row of tableRows) {
+        if (row.cells[columnNumber].textContent === str) {
+            return row.cells[columnNumber];
+        }
+    }
+}
+// Получить объект с именами и значениями кук
+function parseCookie() {
+    let cookieArr = document.cookie.split('; ');
+    let obj = {};
+
+    cookieArr.forEach(function(item) {
+        let [cooName, value] = item.split('=');
+
+        this[cooName] = value;
+    }, obj)
+
+    cookies = obj;
+}
+
+// Записать объект с именами и значениями имеющихся в браузере кук в переменную cookies. 
+// Его потом обновляем в обработчике кнопки "Добавить"
+parseCookie();
+// Добавить имеющиеся куки при загрузке страницы из объекта cookies
 loadCookies();
 
-// for (let button of deleteButtons) {
-//     button.addEventListener('click', (e) => {
-//         let parentRow = e.target.parentNode.parentNode;
-//         let cookName = parentRow.cells[0].textContent;
-    
-//         if (cookName in cookies) {
-//             let date = new Date(0);
-    
-//             document.cookie = `${cookName}=${cookieValue}; ; expires=${date.toUTCString()}`;
-//         }
-//         listTable.removeChild(parentRow);
-//     });
-// }
+// Обработчики событий
+// Фильтрация
+filterNameInput.addEventListener('keyup', function() {
+    let filter = filterNameInput.value;
 
+    if (filter !== '') {
+        for (let cell of nameCells) {
+            if ( !isMatching(cell.textContent, filter) && !isMatching(cell.nextElementSibling.textContent, filter) ) {
+                cell.parentNode.style.display = 'none';
+            } else if ( isMatching(cell.textContent, filter) || isMatching(cell.nextElementSibling.textContent, filter) ) {
+                cell.parentNode.style.display = 'table-row';
+            };
+        };
+    } else {
+        for (let row of rows) {
+            row.style.display = 'table-row';
+        };
+    };
+});
+
+// Добавление кук
 addButton.addEventListener('click', () => {
     if (addNameInput.value === '' || addValueInput.value === '') { 
         return
     }
 
-    cookieName = addNameInput.value;
-    cookieValue = addValueInput.value;
+    let cookieName = addNameInput.value;
+    let cookieValue = addValueInput.value;
+    let filter = filterNameInput.value;
 
     if (cookieName in cookies) {
-        if (cookies[cookieName] === addValueInput.value) {
+        if (cookies[cookieName] === cookieValue) {
             return;
         } 
         document.cookie = `${cookieName}=${cookieValue}`;
@@ -153,55 +186,49 @@ addButton.addEventListener('click', () => {
         deleteBtn = addDeleteBtn(deleteCell);
         
         listTable.appendChild(row);
-    }
-    // let checkNames = checkTable(0);
 
-    // let checkN = checkNames.some((str)=>{
-    //     return str === addNameInput.value
-    // });
+        if (filter !== '') {
+            if (!isMatching( cookieName, filter) && !isMatching(cookieValue, filter) ) {
+                row.style.display = 'none'
+            }
+        }
+    }
 
     addNameInput.value = '';
     addValueInput.value = '';
-    nameCells = document.querySelectorAll('td[data-cellValue = "nameCell"]');
-
-    // let checkValues = checkTable(1);
-
-    // if ( checkValues.some((str)=>{
-    //     return str === addValueInput.value
-    // }) ) return;
-
-    // здесь можно обработать нажатие на кнопку "добавить cookie"
+    nameCells = document.querySelectorAll('td[data-cellValue = "nameCell"]'); // Обновить коллекцию ячеек с именами
+    rows = listTable.rows; // Записать коллекцию рядов таблицы
+    parseCookie(); // Обновить объект с куками
 });
 
-function findCell(tableRows, str, columnNumber) {
-    for (let row of tableRows) {
-        if (row.cells[columnNumber].textContent === str) {
-            return row.cells[columnNumber];
-        }
-    }
-}
 
-function checkTable(columnNum) {
-    let texts = [];
+// Пока не понадобилось
 
-    for (let row of rows) {
-        texts.push(row.cells[columnNum].textContent)
-    }
+// Получить массив с текстовым содержимым ячеек в определенном столбце
+// function checkTable(columnNum) {
+//     let texts = [];
+
+//     for (let row of rows) {
+//         texts.push(row.cells[columnNum].textContent)
+//     }
     
-    return texts;
-}
+//     return texts;
+// }
 
-function parseCookie() {
-    let cookieArr = document.cookie.split('; ');
-    let obj = {};
+// Повесить обработчики удаления через коллекцию
 
-    cookieArr.forEach(function(item) {
-        let [cooName, value] = item.split('=');
+// const deleteButtons = listTable.getElementsByTagName('BUTTON');
 
-        this[cooName] = value;
-    }, obj)
-
-    return obj;
-}
-
-console.log(nameCells)
+// for (let button of deleteButtons) {
+//     button.addEventListener('click', (e) => {
+//         let parentRow = e.target.parentNode.parentNode;
+//         let cookName = parentRow.cells[0].textContent;
+    
+//         if (cookName in cookies) {
+//             let date = new Date(0);
+    
+//             document.cookie = `${cookName}=${cookieValue}; ; expires=${date.toUTCString()}`;
+//         }
+//         listTable.removeChild(parentRow);
+//     });
+// }
